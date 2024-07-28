@@ -5410,14 +5410,28 @@ exit:
 }
 
 static int cfg80211_rtw_change_beacon(struct wiphy *wiphy, struct net_device *ndev,
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 7, 0))
+	/*	Kernel 6.7.0 refactored the beacon into a wrapper struct that carries some
+	 *	other metadata.
+	 *
+	 *	https://github.com/torvalds/linux/commit/bb55441c57ccc5cc2eab44e1a97698b9d708871d
+	 */
+	  struct cfg80211_ap_update *update)
+#else
 		struct cfg80211_beacon_data *info)
+#endif
 {
 	int ret = 0;
 	_adapter *adapter = (_adapter *)rtw_netdev_priv(ndev);
 
 	RTW_INFO(FUNC_NDEV_FMT"\n", FUNC_NDEV_ARG(ndev));
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 7, 0))
+	ret = rtw_add_beacon(adapter, update->beacon.head, update->beacon.head_len,
+			update->beacon.tail, update->beacon.tail_len);
+#else
 	ret = rtw_add_beacon(adapter, info->head, info->head_len, info->tail, info->tail_len);
+#endif
 
 	return ret;
 }
